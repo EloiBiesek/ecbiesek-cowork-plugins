@@ -1,0 +1,34 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "ecbiesek-cowork-plugins",
+  "description": "Plugins internos da ECBIESEK para Claude Cowork — automações de construção civil, controle de empreiteiros, extração de documentos fiscais e trabalhistas.",
+  "owner": {
+    "name": "ECBIESEK / INOTEC",
+    "email": "eloibiesek@gmail.com"
+  },
+  "plugins": [
+    {
+      "name": "gestao-empreiteiros",
+      "source": "./plugins/gestao-empreiteiros",
+      "description": "Extração automatizada de SEFIP e NFSe de empreiteiros de obras de construção civil. Consolida dados de trabalhadores (CAT 01) e notas fiscais em planilhas de controle.",
+      "version": "1.0.0",
+      "category": "construção civil",
+      "author": {
+        "name": "Eloi Biesek",
+        "email": "eloibiesek@gmail.com"
+      },
+      "keywords": [
+        "sefip",
+        "nfse",
+        "empreiteiros",
+        "construção civil",
+        "notas fiscais",
+        "cat01",
+        "fgts",
+        "gfip",
+        "alocação de trabalhadores"
+      ],
+      "license": "MIT"
+    }
+  ]
+}

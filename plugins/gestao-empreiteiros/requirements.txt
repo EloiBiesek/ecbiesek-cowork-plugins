@@ -1,0 +1,9 @@
+# Dependências do plugin gestao-empreiteiros
+# Comuns (SEFIP + NFSe)
+pdfplumber
+openpyxl
+pymupdf
+Pillow
+
+# OCR (opcional — só quando há PDFs-imagem/escaneados)
+rapidocr-onnxruntime

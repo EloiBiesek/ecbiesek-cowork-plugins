@@ -1,0 +1,20 @@
+{
+  "name": "gestao-empreiteiros",
+  "version": "1.0.0",
+  "description": "Extração automatizada de SEFIP e NFSe de empreiteiros de obras de construção civil. Consolida dados de trabalhadores (CAT 01) e notas fiscais em planilhas de controle.",
+  "author": {
+    "name": "Eloi Biesek",
+    "email": "eloibiesek@gmail.com"
+  },
+  "license": "MIT",
+  "keywords": [
+    "sefip",
+    "nfse",
+    "empreiteiros",
+    "construção civil",
+    "notas fiscais",
+    "cat01",
+    "fgts",
+    "gfip"
+  ]
+}

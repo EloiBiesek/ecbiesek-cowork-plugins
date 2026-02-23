@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "ecbiesek-cowork-plugins",
-  "description": "Plugins internos da ECBIESEK para Claude Cowork — automações de construção civil, controle de empreiteiros, extração de documentos fiscais e trabalhistas.",
+  "description": "Plugins internos da ECBIESEK para Claude Cowork — automações de construção civil, gestão de obras, controle de empreiteiros, extração de documentos fiscais e trabalhistas.",
   "owner": {
     "name": "ECBIESEK / INOTEC",
     "email": "eloibiesek@gmail.com"
@@ -27,6 +27,27 @@
         "fgts",
         "gfip",
         "alocação de trabalhadores"
+      ],
+      "license": "MIT"
+    },
+    {
+      "name": "gestao-obras",
+      "source": "./plugins/gestao-obras",
+      "description": "Ferramentas de gestão e auditoria de obras — validação de estrutura de pastas, conformidade documental e padronização.",
+      "version": "1.0.0",
+      "category": "construção civil",
+      "author": {
+        "name": "Eloi Biesek",
+        "email": "eloibiesek@gmail.com"
+      },
+      "keywords": [
+        "obra",
+        "estrutura",
+        "validação",
+        "auditoria",
+        "conformidade",
+        "pasta padrão",
+        "construção civil"
       ],
       "license": "MIT"
     }

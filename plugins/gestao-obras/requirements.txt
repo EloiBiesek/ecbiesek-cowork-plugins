@@ -1,0 +1,4 @@
+# Validador de estrutura
+# O script funciona com Python puro (stdlib).
+# openpyxl é necessário apenas para exportar relatórios em Excel.
+openpyxl

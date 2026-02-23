@@ -1,0 +1,73 @@
+{
+  "version": "1.0",
+  "description": "Estrutura padrão ECBIESEK para pastas de obra. Cada obra deve conter estas 14 seções numeradas.",
+  "structure": [
+    {
+      "pattern": "01 - DOCUMENTOS DA OBRA*",
+      "required": true,
+      "children": [
+        {"pattern": "PROGRAMAS DE SEGURAN*", "required": false}
+      ],
+      "expected_files": ["*CNO*", "*Memorial*"]
+    },
+    {
+      "pattern": "02 - DOCUMENTOS DA EMPRESA*",
+      "required": true,
+      "note": "Pode ter sufixo (SPE), nome da SPE, etc.",
+      "expected_files": ["*CNPJ*", "*CONTRATO SOCIAL*"]
+    },
+    {
+      "pattern": "03 - DOCUMENTOS DO TERRENO*",
+      "required": true
+    },
+    {
+      "pattern": "04 - DOCUMENTOS DA SCP*",
+      "required": false,
+      "note": "Nem toda obra tem SCP"
+    },
+    {
+      "pattern": "05 - INCORPORA*",
+      "required": true
+    },
+    {
+      "pattern": "06 - PROJETOS*",
+      "required": true,
+      "note": "Pode ter sufixo com nome da obra (ex: '06 - PROJETOS - LAGUNAS')"
+    },
+    {
+      "pattern": "07 - PRESTADORES DE SERVI*",
+      "required": true,
+      "note": "Contém subpastas numeradas de empreiteiros"
+    },
+    {
+      "pattern": "08 - IMPOSTOS E ENCARGOS*",
+      "required": true
+    },
+    {
+      "pattern": "09 - CLIENTES*",
+      "required": true
+    },
+    {
+      "pattern": "10 - COMPRAS*",
+      "required": true
+    },
+    {
+      "pattern": "11 - CONTABILIDADE*",
+      "required": true
+    },
+    {
+      "pattern": "12 - ENGENHARIA*",
+      "required": true,
+      "note": "Pode ter sufixo com nome da obra"
+    },
+    {
+      "pattern": "13 - GEST*O DE CANTEIRO",
+      "required": true,
+      "note": "Aceita GESTÃO ou GESTAO"
+    },
+    {
+      "pattern": "14 - OUTROS*",
+      "required": false
+    }
+  ]
+}

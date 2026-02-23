@@ -1,0 +1,19 @@
+{
+  "name": "gestao-obras",
+  "version": "1.0.0",
+  "description": "Ferramentas de gestão e auditoria de obras — validação de estrutura de pastas, conformidade documental e padronização.",
+  "author": {
+    "name": "Eloi Biesek",
+    "email": "eloibiesek@gmail.com"
+  },
+  "license": "MIT",
+  "keywords": [
+    "obra",
+    "estrutura",
+    "validação",
+    "auditoria",
+    "conformidade",
+    "pasta padrão",
+    "construção civil"
+  ]
+}

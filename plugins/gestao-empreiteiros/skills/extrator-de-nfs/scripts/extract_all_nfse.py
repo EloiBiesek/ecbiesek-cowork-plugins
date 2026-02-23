@@ -435,6 +435,10 @@ def main():
                         help='Skip PDFs already registered in the spreadsheet')
     parser.add_argument('--retry-images', action='store_true',
                         help='In incremental mode, also retry image PDFs')
+    parser.add_argument('--empreiteiros', nargs='+', type=int, default=None,
+                        help='Processar apenas empreiteiros específicos (ex: 1 3 7)')
+    parser.add_argument('--batch-size', type=int, default=0,
+                        help='Limite de PDFs por execução (0 = sem limite)')
     args = parser.parse_args()
 
     # Resolver obra-dir (--obra-dir > --base > auto-detect)
@@ -485,13 +489,50 @@ def main():
             if os.path.isdir(os.path.join(BASE, d)) and re.match(r'\d{2}\s', d)
         ])
 
+    # Filtrar empreiteiros se especificado
+    if args.empreiteiros:
+        selected_nums = {str(n).zfill(2) for n in args.empreiteiros}
+        contractors = [c for c in contractors if c[:2] in selected_nums]
+        if not contractors:
+            print(f"  Nenhum empreiteiro encontrado com números: {args.empreiteiros}")
+            sys.exit(1)
+        print(f"  Processando {len(contractors)} empreiteiro(s): {', '.join(c[:2] for c in contractors)}")
+        print()
+
+    batch_limit = args.batch_size
+    if batch_limit > 0:
+        print(f"  Batch size: {batch_limit} PDFs por execução")
+        print()
+
     all_records = []
+    # When filtering by empreiteiros or batch-size, preserve existing records
+    # for empreiteiros NOT being processed in this run
+    existing_records_other = []
+    if (args.empreiteiros or batch_limit > 0) and os.path.exists(OUTPUT):
+        try:
+            with open(OUTPUT, 'r', encoding='utf-8') as f:
+                prev_data = json.load(f)
+            prev_records = prev_data.get("records", [])
+            # Keep records for empreiteiros NOT in this run
+            selected_dirs = {c[:2] for c in contractors}
+            existing_records_other = [
+                r for r in prev_records
+                if r.get("empreiteiro_num") not in selected_dirs
+            ]
+        except Exception:
+            pass
+
     stats = {
         "total_pdfs": 0, "extracted_ok": 0, "missing_fields": 0,
         "errors": 0, "skipped_existing": 0
     }
+    batch_total_processed = 0
+    batch_limit_reached = False
 
     for contractor_dir in contractors:
+        if batch_limit_reached:
+            break
+
         cpath = os.path.join(BASE, contractor_dir)
         contractor_num = contractor_dir[:2]
         contractor_label = contractor_dir
@@ -502,6 +543,11 @@ def main():
         processed = 0
 
         for pdf_path in pdfs:
+            # Batch limit check
+            if batch_limit > 0 and batch_total_processed >= batch_limit:
+                batch_limit_reached = True
+                break
+
             stats["total_pdfs"] += 1
             fname = os.path.basename(pdf_path)
 
@@ -554,11 +600,18 @@ def main():
 
             all_records.append(record)
             processed += 1
+            batch_total_processed += 1
 
         status = f"{processed:3d} novos"
         if skipped > 0:
             status += f", {skipped:3d} já existentes"
         print(f"  {contractor_label[:45]:45s} | {len(pdfs):3d} PDFs | {status}")
+
+    if batch_limit_reached:
+        print(f"\n  ** Batch limit atingido ({batch_limit} PDFs). Execute novamente para continuar. **")
+
+    # Merge with preserved records from other empreiteiros
+    all_records = existing_records_other + all_records
 
     # Sort by contractor number, then competência
     def sort_key(r):

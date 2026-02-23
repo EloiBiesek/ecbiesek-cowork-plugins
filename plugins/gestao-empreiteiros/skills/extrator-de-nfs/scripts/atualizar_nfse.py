@@ -16,6 +16,8 @@ Uso:
     python atualizar_nfse.py --force            # Reprocessa tudo do zero
     python atualizar_nfse.py --sem-ocr          # Pula etapa de OCR
     python atualizar_nfse.py --listar-obras     # Lista obras disponíveis e sai
+    python atualizar_nfse.py --empreiteiros 1 3 # Apenas empreiteiros 01 e 03
+    python atualizar_nfse.py --batch-size 30    # Limita a 30 PDFs por execução
 """
 
 import os, sys, json, time, argparse
@@ -133,12 +135,16 @@ def step_check_status():
         sys.argv = argv_backup
 
 
-def step_extract(incremental=False, force=False):
+def step_extract(incremental=False, force=False, empreiteiros=None, batch_size=0):
     """Executa extração de texto dos PDFs de NF."""
     argv_backup = sys.argv
     sys.argv = ["extract_all_nfse.py", "--obra-dir", constants_nfse.BASE_DIR]
     if incremental:
         sys.argv.append("--incremental")
+    if empreiteiros:
+        sys.argv += ["--empreiteiros"] + [str(e) for e in empreiteiros]
+    if batch_size > 0:
+        sys.argv += ["--batch-size", str(batch_size)]
     try:
         from extract_all_nfse import main as extract_main
         extract_main()
@@ -149,17 +155,50 @@ def step_extract(incremental=False, force=False):
 
 
 def step_ocr(batch_size=15):
-    """Executa OCR nos PDFs-imagem."""
-    argv_backup = sys.argv
-    sys.argv = ["ocr_nfse.py", "--obra-dir", constants_nfse.BASE_DIR,
-                "--batch-size", str(batch_size)]
-    try:
-        from ocr_nfse import main as ocr_main
-        ocr_main()
-    except SystemExit:
-        pass
-    finally:
-        sys.argv = argv_backup
+    """Executa OCR nos PDFs-imagem em batches até concluir todos."""
+    max_rounds = 50  # Segurança: evita loop infinito
+    total_processed = 0
+
+    for round_num in range(max_rounds):
+        # Verificar quantos PDFs ainda precisam de OCR
+        state_path = os.path.join(constants_nfse.STATE_DIR, "nfse_extracted.json")
+        if not os.path.exists(state_path):
+            break
+        try:
+            with open(state_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            records = data.get("records", [])
+            pending = [
+                r for r in records
+                if not (r.get("nf") and r.get("valor_total") and r.get("competencia"))
+                and "sem texto" in (r.get("observacao") or "").lower()
+            ]
+        except Exception:
+            pending = []
+
+        if not pending:
+            if round_num > 0:
+                print(f"    Todos os PDFs-imagem processados ({total_processed} no total)")
+            break
+
+        start_offset = round_num * batch_size
+        if start_offset >= len(pending):
+            break
+
+        if round_num > 0:
+            print(f"    Batch {round_num + 1}: {len(pending)} PDFs-imagem restantes...")
+
+        argv_backup = sys.argv
+        sys.argv = ["ocr_nfse.py", "--obra-dir", constants_nfse.BASE_DIR,
+                    "--batch-size", str(batch_size)]
+        try:
+            from ocr_nfse import main as ocr_main
+            ocr_main()
+            total_processed += min(batch_size, len(pending))
+        except SystemExit:
+            pass
+        finally:
+            sys.argv = argv_backup
 
 
 def step_populate_xlsx(append=False):
@@ -215,6 +254,10 @@ Exemplos:
                         help='Pula etapa de OCR')
     parser.add_argument('--incremental', action='store_true',
                         help='Pula PDFs já registrados na planilha')
+    parser.add_argument('--empreiteiros', nargs='+', type=int, default=None,
+                        help='Processar apenas empreiteiros específicos (ex: 1 3 7)')
+    parser.add_argument('--batch-size', type=int, default=50,
+                        help='Limite de PDFs por execução na extração (default: 50)')
     args = parser.parse_args()
 
     # ── Listar obras ──
@@ -278,7 +321,8 @@ Exemplos:
     print("  PASSO 2/5: Extrair dados dos PDFs de NF")
     print(f"{'─'*70}")
     t2 = time.time()
-    step_extract(incremental=args.incremental, force=args.force)
+    step_extract(incremental=args.incremental, force=args.force,
+                 empreiteiros=args.empreiteiros, batch_size=args.batch_size)
     print(f"  Tempo: {tempo_formatado(time.time() - t2)}")
 
     # ── Passo 3: OCR ──

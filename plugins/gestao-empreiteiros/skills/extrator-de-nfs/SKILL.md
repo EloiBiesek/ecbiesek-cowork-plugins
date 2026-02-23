@@ -61,6 +61,38 @@ Skill: anthropic-skills:pdf
 
 ---
 
+## REGRA CRÍTICA — Sempre processar em batches
+
+**NUNCA execute a extração de todos os empreiteiros de uma vez.** Obras grandes
+(como Lagunas, com 12+ empreiteiros e centenas de PDFs) sobrecarregam o contexto
+e causam falhas.
+
+**Estratégia obrigatória para obras com mais de 3 empreiteiros:**
+
+1. Primeiro, verifique o estado atual (`check_status.py`)
+2. Processe **1 a 3 empreiteiros por vez** usando `--empreiteiros`
+3. Após cada batch, verifique o resultado antes de continuar
+4. Repita até processar todos
+
+**Exemplo para uma obra com 12 empreiteiros:**
+```bash
+# Batch 1: empreiteiros 01-03
+python3 scripts/atualizar_nfse.py --obra-dir "/caminho" --empreiteiros 1 2 3
+# Batch 2: empreiteiros 04-06
+python3 scripts/atualizar_nfse.py --obra-dir "/caminho" --empreiteiros 4 5 6 --incremental
+# Batch 3: empreiteiros 07-09
+python3 scripts/atualizar_nfse.py --obra-dir "/caminho" --empreiteiros 7 8 9 --incremental
+# Batch 4: empreiteiros 10-12
+python3 scripts/atualizar_nfse.py --obra-dir "/caminho" --empreiteiros 10 11 12 --incremental
+```
+
+Use `--incremental` a partir do segundo batch para não reprocessar o que já foi feito.
+Use `--batch-size N` para limitar o número de PDFs por execução (default: 50).
+
+Para obras pequenas (3 ou menos empreiteiros), pode executar tudo de uma vez.
+
+---
+
 ## Fluxo recomendado — Sequencial
 
 Execute os scripts um a um na ordem abaixo. Todos aceitam `--obra-dir`.
@@ -71,15 +103,18 @@ Execute os scripts um a um na ordem abaixo. Todos aceitam `--obra-dir`.
 PYTHONIOENCODING=utf-8 python3 scripts/check_status.py --obra-dir "/caminho"
 ```
 
-### Passo 2 — Extrair dados dos PDFs
+### Passo 2 — Extrair dados dos PDFs (em batches)
+
+Para obras grandes, **sempre** use `--empreiteiros` para processar em grupos:
 
 ```bash
-PYTHONIOENCODING=utf-8 python3 scripts/extract_all_nfse.py --obra-dir "/caminho"
-```
+# Processar empreiteiros específicos
+PYTHONIOENCODING=utf-8 python3 scripts/extract_all_nfse.py --obra-dir "/caminho" --empreiteiros 1 2 3
 
-Para extração incremental (pula NFs já na planilha):
+# Com limite de PDFs por execução
+python3 scripts/extract_all_nfse.py --obra-dir "/caminho" --empreiteiros 4 5 6 --batch-size 30
 
-```bash
+# Incremental (pula NFs já processadas)
 python3 scripts/extract_all_nfse.py --obra-dir "/caminho" --incremental
 ```
 
@@ -90,6 +125,8 @@ PYTHONIOENCODING=utf-8 python3 scripts/ocr_nfse.py --obra-dir "/caminho" --batch
 ```
 
 Usa **RapidOCR + PyMuPDF** (sem Tesseract). Detecta rotação 0°/180° automaticamente.
+O pipeline unificado (`atualizar_nfse.py`) executa OCR em loop automático até
+processar todos os PDFs-imagem pendentes.
 
 > **Dica:** Se o OCR não resolver, abra o PDF com a skill `anthropic-skills:pdf`
 > e extraia os dados manualmente — depois edite o JSON em `.nfse-state/`.
@@ -116,13 +153,20 @@ PYTHONIOENCODING=utf-8 python3 scripts/validate_extraction.py --obra-dir "/camin
 
 ## Pipeline unificado (atualizar_nfse.py)
 
-Para executar todos os passos de uma vez:
+Executa todos os 5 passos de uma vez. **Para obras grandes, use `--empreiteiros`:**
 
 ```bash
+# Obra pequena (3 ou menos empreiteiros) — pode rodar tudo
 python3 scripts/atualizar_nfse.py --obra-dir "/caminho/para/prestadores"
-python3 scripts/atualizar_nfse.py --obra-dir "/caminho" --force
-python3 scripts/atualizar_nfse.py --obra-dir "/caminho" --sem-ocr
-python3 scripts/atualizar_nfse.py --obra-dir "/caminho" --incremental
+
+# Obra grande — processar por grupos de empreiteiros
+python3 scripts/atualizar_nfse.py --obra-dir "/caminho" --empreiteiros 1 2 3
+python3 scripts/atualizar_nfse.py --obra-dir "/caminho" --empreiteiros 4 5 6 --incremental
+
+# Outras opções
+python3 scripts/atualizar_nfse.py --obra-dir "/caminho" --force           # Reprocessar tudo
+python3 scripts/atualizar_nfse.py --obra-dir "/caminho" --sem-ocr         # Pular OCR
+python3 scripts/atualizar_nfse.py --obra-dir "/caminho" --batch-size 30   # Limitar PDFs
 ```
 
 Se estiver dentro da pasta da obra, `--obra-dir` é opcional — o script detecta

@@ -210,8 +210,14 @@ def main():
         return
 
     # === FULL MODE: Clear existing content ===
+    # Unmerge all merged cells first to avoid MergedCell write errors
+    from openpyxl.cell.cell import MergedCell
+    for merge_range in list(ws.merged_cells.ranges):
+        ws.unmerge_cells(str(merge_range))
     for row in ws.iter_rows(min_row=1, max_row=ws.max_row, max_col=20):
         for cell in row:
+            if isinstance(cell, MergedCell):
+                continue
             cell.value = None
             cell.font = Font()
             cell.fill = PatternFill()
